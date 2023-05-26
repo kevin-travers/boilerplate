@@ -9,7 +9,10 @@ import (
 func NewRouter() *mux.Router {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/", index).Methods(http.MethodGet)
 	router.HandleFunc("/health_check", healthCheck).Methods(http.MethodGet)
+	router.HandleFunc("/job", getJob).Methods(http.MethodGet)
+	router.HandleFunc("/job", createJob).Methods(http.MethodPost)
+	router.HandleFunc("/job", updateJob).Methods(http.MethodPut)
+	router.HandleFunc("/job", deleteJob).Methods(http.MethodDelete)
 	return router
 }
