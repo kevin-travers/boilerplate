@@ -1,13 +1,19 @@
 package api
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"service/models"
+	"service/repository"
 )
 
+type Server struct {
+	jobDB *repository.JobRepository
+}
+
 // healthCheck is a handler function that returns a 200 status code
-func healthCheck(w http.ResponseWriter, r *http.Request) {
+func (srv *Server) healthCheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	// write message back to user passed in via URL
 	w.Write([]byte("Health check!"))
@@ -15,22 +21,36 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 // getJob is a handler function that returns a 200 status code and unmarshales a job from the request body
-func getJob(w http.ResponseWriter, r *http.Request) {
+func (srv *Server) getJob(w http.ResponseWriter, r *http.Request) {
 	// create a new job
-	job := models.JobRequest{}
+	payload := models.JobRequest{}
 	// unmarshal the request body into the job struct
-	err := job.FromJSON(r.Body)
+	err := payload.FromJSON(r.Body)
 	if err != nil {
+		log.Printf("Unable to unmarshal JSON")
 		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
+		return
 	}
+	job := srv.jobDB.GetJobByID(payload.JobId)
+	// Encode the User object into JSON
+	jsonData, err := json.Marshal(job)
+	if err != nil {
+		log.Printf("Internal Server Error")
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	// Set the response headers
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	// write message back to user passed in via URL
-	w.Write([]byte("Get Job!"))
-	log.Printf("Get Job")
+	// write message back to user passed in via URL with job
+	// Write the JSON response
+	w.Write(jsonData)
+	log.Printf("Get Job: %v", job)
+
 }
 
 // getJobs is a handler function that returns a 200 status code and unmarshales a job from the request body
-func getJobs(w http.ResponseWriter, r *http.Request) {
+func (srv *Server) getJobs(w http.ResponseWriter, r *http.Request) {
 	// create a new job
 	job := models.JobRequest{}
 	// unmarshal the request body into the job struct
@@ -45,7 +65,7 @@ func getJobs(w http.ResponseWriter, r *http.Request) {
 }
 
 // createJob is a handler function that returns a 200 status code and unmarshales a job from the request body
-func createJob(w http.ResponseWriter, r *http.Request) {
+func (srv *Server) createJob(w http.ResponseWriter, r *http.Request) {
 	// create a new job
 	job := models.JobRequest{}
 	// unmarshal the request body into the job struct
@@ -60,7 +80,7 @@ func createJob(w http.ResponseWriter, r *http.Request) {
 }
 
 // updateJob is a handler function that returns a 200 status code and unmarshales a job from the request body
-func updateJob(w http.ResponseWriter, r *http.Request) {
+func (srv *Server) updateJob(w http.ResponseWriter, r *http.Request) {
 	// create a new job
 	job := models.JobRequest{}
 	// unmarshal the request body into the job struct
@@ -75,7 +95,7 @@ func updateJob(w http.ResponseWriter, r *http.Request) {
 }
 
 // deleteJob is a handler function that returns a 200 status code and unmarshales a job from the request body
-func deleteJob(w http.ResponseWriter, r *http.Request) {
+func (srv *Server) deleteJob(w http.ResponseWriter, r *http.Request) {
 	// create a new job
 	job := models.JobRequest{}
 	// unmarshal the request body into the job struct

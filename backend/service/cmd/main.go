@@ -8,7 +8,7 @@ import (
 
 func main() {
 	log.SetFlags(log.Flags() | log.Lmicroseconds | log.Lshortfile)
-	log.Printf("STARTING Server")
+	log.Printf("STARTING Service")
 
 	// setup router
 	router := api.NewRouter()
