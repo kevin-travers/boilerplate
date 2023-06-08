@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"log"
 	"service/models"
 )
 
@@ -21,6 +22,7 @@ func NewJobsMemory() *JobsMemory {
 func (db *JobsMemory) FindJobByID(ctx context.Context, jobID string) (*models.JobRequest, error) {
 	job, ok := db.JobRequests[jobID]
 	if !ok {
+		log.Printf("Job not found: %s", jobID)
 		return nil, models.ErrJobNotFound
 	}
 	return job, nil
@@ -45,6 +47,7 @@ func (db *JobsMemory) CreateJob(ctx context.Context, job *models.JobRequest) err
 func (db *JobsMemory) DeleteJob(ctx context.Context, jobID string) error {
 	_, ok := db.JobRequests[jobID]
 	if !ok {
+		log.Printf("Job not found: %s", jobID)
 		return models.ErrJobNotFound
 	}
 	delete(db.JobRequests, jobID)
@@ -55,6 +58,7 @@ func (db *JobsMemory) DeleteJob(ctx context.Context, jobID string) error {
 func (db *JobsMemory) UpdateJob(ctx context.Context, job *models.JobRequest) error {
 	_, ok := db.JobRequests[job.JobId]
 	if !ok {
+		log.Printf("Job not found: %s", job.JobId)
 		return models.ErrJobNotFound
 	}
 	db.JobRequests[job.JobId] = job
