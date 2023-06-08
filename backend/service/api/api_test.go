@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -70,8 +71,10 @@ func TestGetJob(t *testing.T) {
 	rr := httptest.NewRecorder()
 	// Create a new job repository mock
 	jobRepo := repositories.NewJobsMemory()
+	// setup context
+	ctx := context.Background()
 	// Add the sample job to the job repository mock
-	jobRepo.CreateJob(&job)
+	jobRepo.CreateJob(ctx, &job)
 
 	// Create a new server using the job repository mock
 	server := NewServer(jobRepo)
@@ -136,9 +139,11 @@ func TestGetJobs(t *testing.T) {
 	rr := httptest.NewRecorder()
 	// Create a new job repository mock
 	jobRepo := repositories.NewJobsMemory()
+	// setup context
+	ctx := context.Background()
 	// Add the sample job to the job repository mock
 	for index := range jobs {
-		jobRepo.CreateJob(&jobs[index])
+		jobRepo.CreateJob(ctx, &jobs[index])
 	}
 	// Create a new server using the job repository mock
 	server := NewServer(jobRepo)
@@ -216,9 +221,11 @@ func TestDeleteJob(t *testing.T) {
 	rr := httptest.NewRecorder()
 	// Create a new job repository mock
 	jobRepo := repositories.NewJobsMemory()
+	// setup context
+	ctx := context.Background()
 	// Add the sample job to the job repository mock
 	for index := range jobs {
-		jobRepo.CreateJob(&jobs[index])
+		jobRepo.CreateJob(ctx, &jobs[index])
 	}
 	// Create a new server using the job repository mock
 	server := NewServer(jobRepo)
@@ -240,7 +247,7 @@ func TestDeleteJob(t *testing.T) {
 		t.Errorf("handler returned unexpected body: got %v, want %v", rr.Body.String(), expectedResponse)
 	}
 
-	jobsAfterDeleted, err := jobRepo.FindJobs()
+	jobsAfterDeleted, err := jobRepo.FindJobs(ctx)
 	if err != nil {
 		t.Errorf("failed to get jobs after delete: %v", err)
 	}
@@ -297,9 +304,10 @@ func TestCreateJob(t *testing.T) {
 	if rr.Body.String() != expectedResponse {
 		t.Errorf("handler returned unexpected body: got %v, want %v", rr.Body.String(), expectedResponse)
 	}
-
+	// setup context
+	ctx := context.Background()
 	// Check if the job was added to the job repository mock
-	createdJob, err := jobRepo.FindJobByID(job.JobId)
+	createdJob, err := jobRepo.FindJobByID(ctx, job.JobId)
 	if err != nil {
 		t.Errorf("failed to get job: %v", err)
 	}
@@ -344,8 +352,10 @@ func TestUpdateJob(t *testing.T) {
 	rr := httptest.NewRecorder()
 	// Create a new job repository mock
 	jobRepo := repositories.NewJobsMemory()
+	// setup context
+	ctx := context.Background()
 	// Add the sample job to the job repository mock
-	jobRepo.CreateJob(&job)
+	jobRepo.CreateJob(ctx, &job)
 
 	// Create a new server using the job repository mock
 	server := NewServer(jobRepo)
@@ -368,7 +378,7 @@ func TestUpdateJob(t *testing.T) {
 	}
 
 	// check if the job was updated to the job repository mock
-	updatedJob, err := jobRepo.FindJobByID(job.JobId)
+	updatedJob, err := jobRepo.FindJobByID(ctx, job.JobId)
 	if err != nil {
 		t.Errorf("failed to get job: %v", err)
 	}

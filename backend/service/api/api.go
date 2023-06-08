@@ -34,7 +34,7 @@ func (srv *Server) getJob(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
 		return
 	}
-	job, err := srv.jobs.FindJobByID(payload.JobId)
+	job, err := srv.jobs.FindJobByID(r.Context(), payload.JobId)
 	// Encode the User object into JSON
 	jsonData, err := json.Marshal(job)
 	if err != nil {
@@ -55,7 +55,7 @@ func (srv *Server) getJob(w http.ResponseWriter, r *http.Request) {
 // getJobs is a handler function that returns a 200 status code and unmarshales a job from the request body
 func (srv *Server) getJobs(w http.ResponseWriter, r *http.Request) {
 	// get all jobs
-	jobs, err := srv.jobs.FindJobs()
+	jobs, err := srv.jobs.FindJobs(r.Context())
 	// Encode the User object into JSON
 	jsonData, err := json.Marshal(jobs)
 	if err != nil {
@@ -82,7 +82,7 @@ func (srv *Server) createJob(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
 	}
 	// create a new job
-	err = srv.jobs.CreateJob(&job)
+	err = srv.jobs.CreateJob(r.Context(), &job)
 	if err != nil {
 		http.Error(w, "Unable to create job", http.StatusBadRequest)
 	}
@@ -102,7 +102,7 @@ func (srv *Server) updateJob(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
 	}
 	// update job
-	err = srv.jobs.UpdateJob(&job)
+	err = srv.jobs.UpdateJob(r.Context(), &job)
 	if err != nil {
 		http.Error(w, "Unable to update job", http.StatusBadRequest)
 	}
@@ -122,7 +122,7 @@ func (srv *Server) deleteJob(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
 	}
 	// delete job
-	err = srv.jobs.DeleteJob(job.JobId)
+	err = srv.jobs.DeleteJob(r.Context(), job.JobId)
 	if err != nil {
 		http.Error(w, "Unable to delete job", http.StatusBadRequest)
 	}
