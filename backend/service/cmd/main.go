@@ -13,7 +13,7 @@ func main() {
 
 	// create a new pack using the database connection
 	//pack := repositories.Pack{Jobs: &repositories.JobRepository(db)}
-	jobs := repositories.NewJobsMemoryWithJobs()
+	jobs := repositories.NewJobsMemory()
 	// setup router
 	server := api.NewServer(jobs)
 	router := api.NewRouter(server)

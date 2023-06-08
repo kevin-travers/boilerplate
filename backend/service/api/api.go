@@ -54,17 +54,22 @@ func (srv *Server) getJob(w http.ResponseWriter, r *http.Request) {
 
 // getJobs is a handler function that returns a 200 status code and unmarshales a job from the request body
 func (srv *Server) getJobs(w http.ResponseWriter, r *http.Request) {
-	// create a new job
-	job := models.JobRequest{}
-	// unmarshal the request body into the job struct
-	err := job.FromJSON(r.Body)
+	// get all jobs
+	jobs, err := srv.jobs.FindJobs()
+	// Encode the User object into JSON
+	jsonData, err := json.Marshal(jobs)
 	if err != nil {
-		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
+		log.Printf("Internal Server Error")
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
+	// Set the response headers
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	// write message back to user passed in via URL
-	w.Write([]byte("Get Jobs!"))
-	log.Printf("Get Jobs")
+	// write message back to user passed in via URL with job
+	// Write the JSON response
+	w.Write(jsonData)
+	log.Printf("Get Jobs: %v", jobs)
 }
 
 // createJob is a handler function that returns a 200 status code and unmarshales a job from the request body
@@ -76,6 +81,11 @@ func (srv *Server) createJob(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
 	}
+	// create a new job
+	err = srv.jobs.CreateJob(&job)
+	if err != nil {
+		http.Error(w, "Unable to create job", http.StatusBadRequest)
+	}
 	w.WriteHeader(http.StatusOK)
 	// write message back to user passed in via URL
 	w.Write([]byte("Create Job!"))
@@ -84,12 +94,17 @@ func (srv *Server) createJob(w http.ResponseWriter, r *http.Request) {
 
 // updateJob is a handler function that returns a 200 status code and unmarshales a job from the request body
 func (srv *Server) updateJob(w http.ResponseWriter, r *http.Request) {
-	// create a new job
+	// update a job
 	job := models.JobRequest{}
 	// unmarshal the request body into the job struct
 	err := job.FromJSON(r.Body)
 	if err != nil {
 		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
+	}
+	// update job
+	err = srv.jobs.UpdateJob(&job)
+	if err != nil {
+		http.Error(w, "Unable to update job", http.StatusBadRequest)
 	}
 	w.WriteHeader(http.StatusOK)
 	// write message back to user passed in via URL
@@ -99,15 +114,21 @@ func (srv *Server) updateJob(w http.ResponseWriter, r *http.Request) {
 
 // deleteJob is a handler function that returns a 200 status code and unmarshales a job from the request body
 func (srv *Server) deleteJob(w http.ResponseWriter, r *http.Request) {
-	// create a new job
+	// delete a job
 	job := models.JobRequest{}
 	// unmarshal the request body into the job struct
 	err := job.FromJSON(r.Body)
 	if err != nil {
 		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
 	}
+	// delete job
+	err = srv.jobs.DeleteJob(job.JobId)
+	if err != nil {
+		http.Error(w, "Unable to delete job", http.StatusBadRequest)
+	}
 	w.WriteHeader(http.StatusOK)
 	// write message back to user passed in via URL
 	w.Write([]byte("Delete Job!"))
 	log.Printf("Delete Job")
+
 }

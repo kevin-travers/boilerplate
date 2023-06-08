@@ -1,15 +1,17 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"service/models"
 	"service/repositories"
 	"testing"
 )
 
 // TestHealthCheck is a unit test for the healthCheck handler function
 func TestHealthCheck(t *testing.T) {
-
 	// Prepare a new HTTP GET request to /health_check endpoint
 	req, err := http.NewRequest("GET", "/health_check", nil)
 	if err != nil {
@@ -40,30 +42,42 @@ func TestHealthCheck(t *testing.T) {
 	}
 }
 
-/*
 // TestGetJob is a unit test for the getJob handler function
 func TestGetJob(t *testing.T) {
 	// Create a sample job
 	job := models.JobRequest{
 		JobId:          "1",
-		JobName:        "Software Engineer",
-		JobType:        "Full-time",
+		JobName:        "Test",
+		JobType:        "jobService",
 		JobStatus:      "Open",
 		JobPriority:    "High",
 		JobDescription: "Job description goes here",
 		JobCreatedDate: "2023-04-21",
 	}
-
+	// convert job to byte array
+	jobJSON, err := json.Marshal(job)
+	bodyReader := bytes.NewReader(jobJSON)
+	if err != nil {
+		t.Errorf("failed to marshal job: %v", err)
+	}
 	// Prepare a GET request
-	req, err := http.NewRequest("GET", "/job", nil)
+	req, err := http.NewRequest("GET", "/job", bodyReader)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// Create a new recorder to capture the response
 	rr := httptest.NewRecorder()
-	// Create an HTTP handler function from the getJob handler
-	handler := http.HandlerFunc(getJob)
+	// Create a new job repository mock
+	jobRepo := repositories.NewJobsMemory()
+	// Add the sample job to the job repository mock
+	jobRepo.CreateJob(&job)
+
+	// Create a new server using the job repository mock
+	server := NewServer(jobRepo)
+
+	// Create an HTTP handler function from the healthCheck handler
+	handler := http.HandlerFunc(server.getJob)
 
 	// Serve the HTTP request using the handler function
 	handler.ServeHTTP(rr, req)
@@ -76,14 +90,17 @@ func TestGetJob(t *testing.T) {
 	// Parse the response body into a JobRequest instance
 	var responseJob models.JobRequest
 	err = json.Unmarshal(rr.Body.Bytes(), &responseJob)
+
 	if err != nil {
 		t.Errorf("failed to unmarshal response body: %v", err)
 	}
 
 	// Validate the response job against the expected job
+
 	if responseJob != job {
 		t.Errorf("handler returned unexpected job: got %+v, want %+v", responseJob, job)
 	}
+
 }
 
 // TestGetJobs is a unit test for the getJobs handler function
@@ -111,7 +128,6 @@ func TestGetJobs(t *testing.T) {
 			JobUpdatedDate: "2023-04-22",
 		},
 	}
-
 	// Prepare a GET request
 	req, err := http.NewRequest("GET", "/jobs", nil)
 	if err != nil {
@@ -120,8 +136,17 @@ func TestGetJobs(t *testing.T) {
 
 	// Create a new recorder to capture the response
 	rr := httptest.NewRecorder()
-	// Create an HTTP handler function from the getJobs handler
-	handler := http.HandlerFunc(getJobs)
+	// Create a new job repository mock
+	jobRepo := repositories.NewJobsMemory()
+	// Add the sample job to the job repository mock
+	for index := range jobs {
+		jobRepo.CreateJob(&jobs[index])
+	}
+	// Create a new server using the job repository mock
+	server := NewServer(jobRepo)
+
+	// Create an HTTP handler function from the healthCheck handler
+	handler := http.HandlerFunc(server.getJobs)
 
 	// Serve the HTTP request using the handler function
 	handler.ServeHTTP(rr, req)
@@ -155,13 +180,32 @@ func TestGetJobs(t *testing.T) {
 
 // TestDeleteJob is a unit test for the deleteJob handler function
 func TestDeleteJob(t *testing.T) {
-	// Create a sample job request
-	job := models.JobRequest{
-		JobId: "1",
+	// Create sample jobs
+	jobs := []models.JobRequest{
+		{
+			JobId:          "1",
+			JobName:        "Software Engineer",
+			JobType:        "Full-time",
+			JobStatus:      "Open",
+			JobPriority:    "High",
+			JobDescription: "Job description goes here",
+			JobCreatedDate: "2023-04-21",
+			JobUpdatedDate: "2023-04-21",
+		},
+		{
+			JobId:          "2",
+			JobName:        "Data Analyst",
+			JobType:        "Part-time",
+			JobStatus:      "Open",
+			JobPriority:    "Medium",
+			JobDescription: "Job description goes here",
+			JobCreatedDate: "2023-04-22",
+			JobUpdatedDate: "2023-04-22",
+		},
 	}
 
 	// Convert the job request to JSON
-	body, err := json.Marshal(job)
+	body, err := json.Marshal(jobs[len(jobs)-1])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,8 +218,17 @@ func TestDeleteJob(t *testing.T) {
 
 	// Create a new recorder to capture the response
 	rr := httptest.NewRecorder()
-	// Create an HTTP handler function from the deleteJob handler
-	handler := http.HandlerFunc(deleteJob)
+	// Create a new job repository mock
+	jobRepo := repositories.NewJobsMemory()
+	// Add the sample job to the job repository mock
+	for index := range jobs {
+		jobRepo.CreateJob(&jobs[index])
+	}
+	// Create a new server using the job repository mock
+	server := NewServer(jobRepo)
+
+	// Create an HTTP handler function from the healthCheck handler
+	handler := http.HandlerFunc(server.deleteJob)
 
 	// Serve the HTTP request using the handler function
 	handler.ServeHTTP(rr, req)
@@ -190,37 +243,50 @@ func TestDeleteJob(t *testing.T) {
 	if rr.Body.String() != expectedResponse {
 		t.Errorf("handler returned unexpected body: got %v, want %v", rr.Body.String(), expectedResponse)
 	}
+
+	jobsAfterDeleted, err := jobRepo.FindJobs()
+	if err != nil {
+		t.Errorf("failed to get jobs after delete: %v", err)
+	}
+	if len(jobsAfterDeleted) != len(jobs)-1 {
+		t.Errorf("failed to delete job: got %d, want %d", len(jobsAfterDeleted), len(jobs)-1)
+	}
 }
 
 // TestCreateJob is a unit test for the createJob handler function
 func TestCreateJob(t *testing.T) {
-	// Create a sample job request
+	// Create a sample job
 	job := models.JobRequest{
 		JobId:          "1",
-		JobName:        "Software Engineer",
-		JobType:        "Full-time",
+		JobName:        "Test",
+		JobType:        "jobService",
 		JobStatus:      "Open",
 		JobPriority:    "High",
 		JobDescription: "Job description goes here",
 		JobCreatedDate: "2023-04-21",
 	}
-
-	// Convert the job request to JSON
-	body, err := json.Marshal(job)
+	// convert job to byte array
+	jobJSON, err := json.Marshal(job)
+	bodyReader := bytes.NewReader(jobJSON)
 	if err != nil {
-		t.Fatal(err)
+		t.Errorf("failed to marshal job: %v", err)
 	}
 
 	// Prepare a request with a request body
-	req, err := http.NewRequest("POST", "/job", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", "/job", bodyReader)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// Create a new recorder to capture the response
 	rr := httptest.NewRecorder()
-	// Create an HTTP handler function from the createJob handler
-	handler := http.HandlerFunc(createJob)
+	// Create a new job repository mock
+	jobRepo := repositories.NewJobsMemory()
+	// Create a new server using the job repository mock
+	server := NewServer(jobRepo)
+
+	// Create an HTTP handler function from the healthCheck handler
+	handler := http.HandlerFunc(server.createJob)
 
 	// Serve the HTTP request using the handler function
 	handler.ServeHTTP(rr, req)
@@ -235,37 +301,61 @@ func TestCreateJob(t *testing.T) {
 	if rr.Body.String() != expectedResponse {
 		t.Errorf("handler returned unexpected body: got %v, want %v", rr.Body.String(), expectedResponse)
 	}
+
+	// Check if the job was added to the job repository mock
+	createdJob, err := jobRepo.FindJobByID(job.JobId)
+	if err != nil {
+		t.Errorf("failed to get job: %v", err)
+	}
+	if *createdJob != job {
+		t.Errorf("failed to create job: got %v, want %v", *createdJob, &job)
+	}
 }
 
 // TestUpdateJob is a unit test for the updateJob handler function
 func TestUpdateJob(t *testing.T) {
-	// Create a sample job request
+	// create a sample job
 	job := models.JobRequest{
 		JobId:          "1",
-		JobName:        "Software Engineer",
-		JobType:        "Full-time",
+		JobName:        "Test",
+		JobType:        "jobService",
 		JobStatus:      "Open",
 		JobPriority:    "High",
-		JobDescription: "Updated job description",
+		JobDescription: "Job description goes here",
 		JobCreatedDate: "2023-04-21",
 	}
-
-	// Convert the job request to JSON
-	body, err := json.Marshal(job)
-	if err != nil {
-		t.Fatal(err)
+	updateJob := models.JobRequest{
+		JobId:          "1",
+		JobName:        "Test",
+		JobType:        "jobService",
+		JobStatus:      "Closed",
+		JobPriority:    "High",
+		JobDescription: "Job description goes here",
+		JobCreatedDate: "2023-04-21",
 	}
-
+	// convert job to byte array
+	jobJSON, err := json.Marshal(updateJob)
+	bodyReader := bytes.NewReader(jobJSON)
+	if err != nil {
+		t.Errorf("failed to marshal job: %v", err)
+	}
 	// Prepare a request with a request body
-	req, err := http.NewRequest("PUT", "/job", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", "/job", bodyReader)
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	// Create a new recorder to capture the response
 	rr := httptest.NewRecorder()
-	// Create an HTTP handler function from the updateJob handler
-	handler := http.HandlerFunc(updateJob)
+	// Create a new job repository mock
+	jobRepo := repositories.NewJobsMemory()
+	// Add the sample job to the job repository mock
+	jobRepo.CreateJob(&job)
+
+	// Create a new server using the job repository mock
+	server := NewServer(jobRepo)
+
+	// Create an HTTP handler function from the healthCheck handler
+	handler := http.HandlerFunc(server.updateJob)
 
 	// Serve the HTTP request using the handler function
 	handler.ServeHTTP(rr, req)
@@ -280,5 +370,13 @@ func TestUpdateJob(t *testing.T) {
 	if rr.Body.String() != expectedResponse {
 		t.Errorf("handler returned unexpected body: got %v, want %v", rr.Body.String(), expectedResponse)
 	}
+
+	// check if the job was updated to the job repository mock
+	updatedJob, err := jobRepo.FindJobByID(job.JobId)
+	if err != nil {
+		t.Errorf("failed to get job: %v", err)
+	}
+	if *updatedJob != updateJob {
+		t.Errorf("failed to update job: got %v, want %v", *updatedJob, &updateJob)
+	}
 }
-*/
