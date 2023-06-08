@@ -109,23 +109,21 @@ func TestGetJobs(t *testing.T) {
 	jobs := []models.JobRequest{
 		{
 			JobId:          "1",
-			JobName:        "Software Engineer",
-			JobType:        "Full-time",
+			JobName:        "Test",
+			JobType:        "jobService",
 			JobStatus:      "Open",
 			JobPriority:    "High",
 			JobDescription: "Job description goes here",
 			JobCreatedDate: "2023-04-21",
-			JobUpdatedDate: "2023-04-21",
 		},
 		{
 			JobId:          "2",
-			JobName:        "Data Analyst",
-			JobType:        "Part-time",
+			JobName:        "Test2",
+			JobType:        "jobService",
 			JobStatus:      "Open",
-			JobPriority:    "Medium",
+			JobPriority:    "High",
 			JobDescription: "Job description goes here",
 			JobCreatedDate: "2023-04-22",
-			JobUpdatedDate: "2023-04-22",
 		},
 	}
 	// Prepare a GET request
@@ -184,23 +182,21 @@ func TestDeleteJob(t *testing.T) {
 	jobs := []models.JobRequest{
 		{
 			JobId:          "1",
-			JobName:        "Software Engineer",
-			JobType:        "Full-time",
+			JobName:        "Test",
+			JobType:        "jobService",
 			JobStatus:      "Open",
 			JobPriority:    "High",
 			JobDescription: "Job description goes here",
 			JobCreatedDate: "2023-04-21",
-			JobUpdatedDate: "2023-04-21",
 		},
 		{
 			JobId:          "2",
-			JobName:        "Data Analyst",
-			JobType:        "Part-time",
+			JobName:        "Test2",
+			JobType:        "jobService",
 			JobStatus:      "Open",
-			JobPriority:    "Medium",
+			JobPriority:    "High",
 			JobDescription: "Job description goes here",
 			JobCreatedDate: "2023-04-22",
-			JobUpdatedDate: "2023-04-22",
 		},
 	}
 
