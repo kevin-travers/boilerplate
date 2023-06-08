@@ -6,7 +6,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func newRouter(srv *server) *mux.Router {
+func NewRouter(srv *Server) *mux.Router {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/health_check", srv.healthCheck).Methods(http.MethodGet)

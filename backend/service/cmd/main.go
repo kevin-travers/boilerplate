@@ -15,7 +15,8 @@ func main() {
 	//pack := repositories.Pack{Jobs: &repositories.JobRepository(db)}
 	jobs := repositories.NewJobsMemoryWithJobs()
 	// setup router
-	router := api.New(jobs)
+	server := api.NewServer(jobs)
+	router := api.NewRouter(server)
 
 	go func() {
 		log.Println(http.ListenAndServe(":8080", router))
