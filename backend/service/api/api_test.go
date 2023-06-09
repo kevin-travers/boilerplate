@@ -9,6 +9,8 @@ import (
 	"service/models"
 	"service/repositories"
 	"testing"
+
+	"github.com/gorilla/mux"
 )
 
 // TestHealthCheck is a unit test for the healthCheck handler function
@@ -24,12 +26,17 @@ func TestHealthCheck(t *testing.T) {
 	jobRepo := repositories.NewJobsMemory()
 	// Create a new server using the job repository mock
 	server := NewServer(jobRepo)
+	/*
+		// Create an HTTP handler function from the healthCheck handler
+		handler := http.HandlerFunc(server.healthCheck)
 
-	// Create an HTTP handler function from the healthCheck handler
-	handler := http.HandlerFunc(server.healthCheck)
-
-	// Serve the HTTP request using the handler function
-	handler.ServeHTTP(rr, req)
+		// Serve the HTTP request using the handler function
+		handler.ServeHTTP(rr, req)
+	*/
+	router := mux.NewRouter()
+	router.HandleFunc("/health_check", server.healthCheck).Methods(http.MethodGet)
+	// Serve the HTTP request
+	router.ServeHTTP(rr, req)
 
 	// Check if the status code of the response is as expected (200 OK)
 	if status := rr.Code; status != http.StatusOK {
@@ -47,7 +54,7 @@ func TestHealthCheck(t *testing.T) {
 func TestGetJob(t *testing.T) {
 	// Create a sample job
 	job := models.JobRequest{
-		JobId:          "1",
+		JobId:          "cat",
 		JobName:        "Test",
 		JobType:        "jobService",
 		JobStatus:      "Open",
@@ -55,14 +62,8 @@ func TestGetJob(t *testing.T) {
 		JobDescription: "Job description goes here",
 		JobCreatedDate: "2023-04-21",
 	}
-	// convert job to byte array
-	jobJSON, err := json.Marshal(job)
-	bodyReader := bytes.NewReader(jobJSON)
-	if err != nil {
-		t.Errorf("failed to marshal job: %v", err)
-	}
-	// Prepare a GET request
-	req, err := http.NewRequest("GET", "/job", bodyReader)
+	// Create a new HTTP GET request for retrieving a job by ID
+	req, err := http.NewRequest("GET", "/job/cat", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,12 +80,12 @@ func TestGetJob(t *testing.T) {
 	// Create a new server using the job repository mock
 	server := NewServer(jobRepo)
 
-	// Create an HTTP handler function from the healthCheck handler
-	handler := http.HandlerFunc(server.getJob)
-
-	// Serve the HTTP request using the handler function
-	handler.ServeHTTP(rr, req)
-
+	// Create a new router instance
+	router := mux.NewRouter()
+	// Register the route with the GetJobByID handler function
+	router.HandleFunc("/job/{id}", server.getJob).Methods(http.MethodGet)
+	// Serve the HTTP request
+	router.ServeHTTP(rr, req)
 	// Check if the status code of the response is as expected (200 OK)
 	if status := rr.Code; status != http.StatusOK {
 		t.Errorf("handler returned wrong status code: got %v, want %v", status, http.StatusOK)
@@ -99,7 +100,6 @@ func TestGetJob(t *testing.T) {
 	}
 
 	// Validate the response job against the expected job
-
 	if responseJob != job {
 		t.Errorf("handler returned unexpected job: got %+v, want %+v", responseJob, job)
 	}
@@ -148,7 +148,7 @@ func TestGetJobs(t *testing.T) {
 	// Create a new server using the job repository mock
 	server := NewServer(jobRepo)
 
-	// Create an HTTP handler function from the healthCheck handler
+	// Create an HTTP handler function from the get jobs handler
 	handler := http.HandlerFunc(server.getJobs)
 
 	// Serve the HTTP request using the handler function
@@ -205,14 +205,8 @@ func TestDeleteJob(t *testing.T) {
 		},
 	}
 
-	// Convert the job request to JSON
-	body, err := json.Marshal(jobs[len(jobs)-1])
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	// Prepare a request with a request body
-	req, err := http.NewRequest("DELETE", "/job", bytes.NewBuffer(body))
+	req, err := http.NewRequest("DELETE", "/job/2", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -230,11 +224,12 @@ func TestDeleteJob(t *testing.T) {
 	// Create a new server using the job repository mock
 	server := NewServer(jobRepo)
 
-	// Create an HTTP handler function from the healthCheck handler
-	handler := http.HandlerFunc(server.deleteJob)
-
-	// Serve the HTTP request using the handler function
-	handler.ServeHTTP(rr, req)
+	// Create a new router instance
+	router := mux.NewRouter()
+	// Register the route with the delete handler function
+	router.HandleFunc("/job/{id}", server.deleteJob).Methods(http.MethodDelete)
+	// Serve the HTTP request
+	router.ServeHTTP(rr, req)
 
 	// Check if the status code of the response is as expected (200 OK)
 	if status := rr.Code; status != http.StatusOK {
@@ -288,7 +283,7 @@ func TestCreateJob(t *testing.T) {
 	// Create a new server using the job repository mock
 	server := NewServer(jobRepo)
 
-	// Create an HTTP handler function from the healthCheck handler
+	// Create an HTTP handler function from the create jobs handler
 	handler := http.HandlerFunc(server.createJob)
 
 	// Serve the HTTP request using the handler function
@@ -360,7 +355,7 @@ func TestUpdateJob(t *testing.T) {
 	// Create a new server using the job repository mock
 	server := NewServer(jobRepo)
 
-	// Create an HTTP handler function from the healthCheck handler
+	// Create an HTTP handler function from the update job handler
 	handler := http.HandlerFunc(server.updateJob)
 
 	// Serve the HTTP request using the handler function

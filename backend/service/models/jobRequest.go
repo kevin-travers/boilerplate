@@ -6,14 +6,13 @@ import (
 )
 
 type JobRequest struct {
-	JobId          string `json:"id"`
+	JobId          string `json:"JobId"`
 	JobName        string `json:"JobName"`
 	JobType        string `json:"JobType"`
 	JobStatus      string `json:"JobStatus"`
 	JobPriority    string `json:"JobPriority"`
 	JobDescription string `json:"JobDescription"`
 	JobCreatedDate string `json:"JobCreatedDate"`
-	JobUpdatedDate string
 }
 
 func (job *JobRequest) FromJSON(r io.Reader) error {

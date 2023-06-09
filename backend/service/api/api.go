@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"service/models"
+
+	"github.com/gorilla/mux"
 )
 
 type Server struct {
@@ -26,16 +28,16 @@ func (srv *Server) healthCheck(w http.ResponseWriter, r *http.Request) {
 // getJob is a handler function that returns a 200 status code and unmarshales a job from the request body
 func (srv *Server) getJob(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Get Job")
-	// create a new job
-	payload := models.JobRequest{}
-	// unmarshal the request body into the job struct
-	err := payload.FromJSON(r.Body)
-	if err != nil {
-		log.Printf("Unable to unmarshal JSON")
-		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
+	// get the job id from the URL
+	vars := mux.Vars(r)
+	// get the job by id
+	id, ok := vars["id"]
+	if !ok {
+		log.Printf("Job ID not found")
+		http.Error(w, "Job ID not found", http.StatusBadRequest)
 		return
 	}
-	job, err := srv.jobs.FindJobByID(r.Context(), payload.JobId)
+	job, err := srv.jobs.FindJobByID(r.Context(), id)
 	// Encode the User object into JSON
 	jsonData, err := json.Marshal(job)
 	if err != nil {
@@ -58,6 +60,7 @@ func (srv *Server) getJobs(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Get Jobs")
 	// get all jobs
 	jobs, err := srv.jobs.FindJobs(r.Context())
+	log.Println(jobs)
 	// Encode the User object into JSON
 	jsonData, err := json.Marshal(jobs)
 	if err != nil {
@@ -128,16 +131,17 @@ func (srv *Server) updateJob(w http.ResponseWriter, r *http.Request) {
 func (srv *Server) deleteJob(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Delete Job")
 	// delete a job
-	job := models.JobRequest{}
-	// unmarshal the request body into the job struct
-	err := job.FromJSON(r.Body)
-	if err != nil {
-		log.Printf("Unable to unmarshal JSON")
-		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
+	// get the job id from the URL
+	vars := mux.Vars(r)
+	// get the job by id
+	id, ok := vars["id"]
+	if !ok {
+		log.Printf("Job ID not found")
+		http.Error(w, "Job ID not found", http.StatusBadRequest)
 		return
 	}
 	// delete job
-	err = srv.jobs.DeleteJob(r.Context(), job.JobId)
+	err := srv.jobs.DeleteJob(r.Context(), id)
 	if err != nil {
 		log.Printf("Unable to delete job")
 		http.Error(w, "Unable to delete job", http.StatusBadRequest)
