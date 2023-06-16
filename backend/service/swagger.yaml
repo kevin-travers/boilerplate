@@ -1,0 +1,6 @@
+info: {}
+paths: {}
+responses:
+    JobRequest:
+        description: This text will appear as description of your response body.
+swagger: "2.0"

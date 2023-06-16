@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"service/api"
+	_ "service/docs" // This line is necessary for go-swagger to find your docs!
 	"service/repositories"
 )
 
